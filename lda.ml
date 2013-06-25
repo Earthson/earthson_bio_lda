@@ -54,13 +54,15 @@ let omcnt = Array.init !dcnt (fun x -> Array.make kkk 0);;
 let nk = Array.make kkk 0;;
 let nm = Array.make !dcnt 0;;
 let ttpc = Array.make !tcnt [];;
-let mtpc = Array.make !mcnt [];;
+let mtpc = Array.make !dcnt [];;
 
 let _ = print_endline "init_stat";;
 
 let _ = List.iter (fun x -> let m, t, z = x in
             omcnt.(m).(z) <- omcnt.(m).(z) + 1;
-            otcnt.(t).(z) <- otcnt.(t).(z) + 1);;
+            otcnt.(t).(z) <- otcnt.(t).(z) + 1;
+            nk.(z) <- nk.(z) + 1;
+            nm.(m) <- nm.(m) + 1);;
 
 (*get non-zero position list for array*)
 let non_zero_list a =
@@ -74,17 +76,58 @@ let non_zero_list a =
 (*non zero list of documents topics*)
 let _ =
     let rec iter i =
-        match i with
-        !dcnt -> ()
-        | i -> mtpc.(i) <- non_zero_list omcnt.(i)
+        if i == !dcnt then ()
+        else (mtpc.(i) <- non_zero_list omcnt.(i))
     in iter 0;;
 
 (*non zero list of term topics*)
 let _=
     let rec iter i =
-        match i with
-        !tcnt -> ()
-        | i -> ttpc.(i) <- non_zero_list otcnt.(i)
+        if i == !tcnt then ()
+        else (ttpc.(i) <- non_zero_list otcnt.(i))
     in iter 0;;
 
-let _ = print_endline (string_of_int (List.length doc_list));;
+
+let default_p z = beta*.alpha/.((float_of_int nk.(z)+.beta*.(float_of_int !tcnt)));;
+
+let prob m t z = 
+        ((float_of_int otcnt.(t).(z))+.beta)*.((float_of_int omcnt.(m).(z))+.alpha)/.((float_of_int nk.(z)+.beta*.(float_of_int !tcnt)));;
+
+let sample_gen, set, to_set, update_with_stack, clear, show_sums, show_stats, show_vals = multi_sampler kkk default_p;;
+
+let to_set_with_list lst m t=
+    List.iter (fun z -> to_set z (prob m t z))
+
+let sample_one (pm, pt, _) (m, t, z) =
+    let pre = if pm != m || pt != t then true else false in
+    nk.(z) <- nk.(z) - 1;
+    nm.(m) <- nm.(m) - 1;
+    wcnt := !wcnt - 1;
+    omcnt.(m).(z) <- omcnt.(m).(z) - 1;
+    otcnt.(t).(z) <- otcnt.(t).(z) - 1;
+    if pre == false then
+        begin
+        clear();
+        to_set z (prob m t z);
+        to_set_with_list ttpc.(t) m t;
+        to_set_with_list mtpc.(m) m t;
+        update_with_stack()
+        end
+    else set z (prob m t z);
+    let nz = sample_gen() in
+    otcnt.(t).(nz) <- otcnt.(t).(nz) + 1;
+    omcnt.(m).(nz) <- omcnt.(m).(nz) + 1;
+    wcnt := !wcnt + 1;
+    nm.(m) <- nm.(m) + 1;
+    nk.(nz) <- nk.(nz) + 1;
+    set nz (prob m t nz);
+    nz;;
+    
+let sample_round its = 
+    let rec round accum pre = function
+    (m, t, z)::left -> 
+        round ((m, t, sample_one pre (m, t, z))::accum) (m, t, z) left
+    | [] -> accum
+    in round [] (-1, -1, -1);;
+
+let _ = sample_round docs;;
