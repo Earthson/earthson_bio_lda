@@ -53,6 +53,8 @@ let otcnt = Array.init !tcnt (fun x -> Array.make kkk 0);;
 let omcnt = Array.init !dcnt (fun x -> Array.make kkk 0);;
 let nk = Array.make kkk 0;;
 let nm = Array.make !dcnt 0;;
+let ttpc = Array.make !tcnt [];;
+let mtpc = Array.make !mcnt [];;
 
 let _ = print_endline "init_stat";;
 
@@ -60,9 +62,29 @@ let _ = List.iter (fun x -> let m, t, z = x in
             omcnt.(m).(z) <- omcnt.(m).(z) + 1;
             otcnt.(t).(z) <- otcnt.(t).(z) + 1);;
 
+(*get non-zero position list for array*)
+let non_zero_list a =
+    let rec for_i i accum =
+        if i == kkk then accum
+        else if a.(i) == 0 then
+            for_i (i+1) accum
+        else for_i (i+1) (i::accum)
+    in for_i 0 [];;
+
+(*non zero list of documents topics*)
+let _ =
+    let rec iter i =
+        match i with
+        !dcnt -> ()
+        | i -> mtpc.(i) <- non_zero_list omcnt.(i)
+    in iter 0;;
+
+(*non zero list of term topics*)
+let _=
+    let rec iter i =
+        match i with
+        !tcnt -> ()
+        | i -> ttpc.(i) <- non_zero_list otcnt.(i)
+    in iter 0;;
+
 let _ = print_endline (string_of_int (List.length doc_list));;
-
-(*
-file_line_iter "data/docs" (fun line -> print_endline line);;
-*)
-
