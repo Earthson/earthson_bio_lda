@@ -94,8 +94,9 @@ let multi_sampler k f =
     in let show_sums () = sums
     in let show_stats () = stats
     in let show_vals () = avals
-    in sample_gen, set, to_set, update_with_stack, clear, show_sums, show_stats, show_vals;;
+    in let sum_gen () = sums.(0)
+    in sample_gen, set, to_set, update_with_stack, clear, sum_gen, show_sums, show_stats, show_vals;;
 
 (*testing*)
 let test_f = function i -> (float_of_int (i+1))*.0.3
-let gen, set, to_set, update_with_stack, clear, show_sums, show_stats, show_vals = multi_sampler 10 test_f;;
+let gen, set, to_set, update_with_stack, clear, sum_gen, show_sums, show_stats, show_vals = multi_sampler 10 test_f;;

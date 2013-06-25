@@ -2,9 +2,6 @@ open Sampler
 
 let _ = Random.self_init ();;
 
-let test_f = function i -> (float_of_int (i+1))*.0.3;;
-let sample_gen, set, to_set, update_with_stack, clear, show_sums, show_stats, show_vals = multi_sampler 10 test_f;;
-
 
 let kkk = 256;;
 let alpha = 50.0/.(float_of_int kkk);;
@@ -24,7 +21,10 @@ let with_o out_chan f =
 
 
 let countor n = let vvv = ref n in
-    fun () -> print_endline (string_of_int !vvv); vvv := !vvv + 1;;
+    fun () -> 
+        if !vvv mod 100 == 0 then
+            print_endline (string_of_int !vvv); 
+        vvv := !vvv + 1;;
 
 let cnt = countor 0;;
 
@@ -93,10 +93,31 @@ let default_p z = beta*.alpha/.((float_of_int nk.(z)+.beta*.(float_of_int !tcnt)
 let prob m t z = 
         ((float_of_int otcnt.(t).(z))+.beta)*.((float_of_int omcnt.(m).(z))+.alpha)/.((float_of_int nk.(z)+.beta*.(float_of_int !tcnt)));;
 
-let sample_gen, set, to_set, update_with_stack, clear, show_sums, show_stats, show_vals = multi_sampler kkk default_p;;
+let sample_gen, set, to_set, update_with_stack, clear, sum_gen, show_sums, show_stats, show_vals = multi_sampler kkk default_p;;
 
-let to_set_with_list lst m t=
-    List.iter (fun z -> to_set z (prob m t z))
+let to_set_with_list lst m t =
+    List.iter (fun z -> to_set z (prob m t z)) lst
+
+let clear_zero tpclist tpcstat =
+    let rec for_iter accum = function
+        z::rlft ->
+            if tpcstat.(z) == 0 then
+                for_iter accum rlft
+            else for_iter (z::accum) rlft
+        | [] -> accum
+    in for_iter [] tpclist;;
+
+let try_tpc_regen m t z nz = 
+    if omcnt.(m).(nz) == 1 then
+        mtpc.(m) <- (nz::mtpc.(m));
+    if omcnt.(m).(z) == 0 then
+        mtpc.(m) <- (clear_zero mtpc.(m) omcnt.(m));
+    if otcnt.(t).(nz) == 1 then
+        ttpc.(t) <- (nz::ttpc.(t));
+    if otcnt.(t).(z) == 0 then
+        ttpc.(t) <- (clear_zero ttpc.(t) otcnt.(t));;
+
+let info_len p = -.p*.(log p)/.(log 2.)
 
 let sample_one (pm, pt, _) (m, t, z) =
     let pre = if pm != m || pt != t then true else false in
@@ -121,13 +142,20 @@ let sample_one (pm, pt, _) (m, t, z) =
     nm.(m) <- nm.(m) + 1;
     nk.(nz) <- nk.(nz) + 1;
     set nz (prob m t nz);
-    nz;;
+    try_tpc_regen m t z nz;
+    let tmpsum = 
+        ((float_of_int nm.(m))+.(float_of_int kkk)*.alpha)*.sum_gen()
+    in cnt();(nz, info_len tmpsum);;
     
 let sample_round its = 
-    let rec round accum pre = function
-    (m, t, z)::left -> 
-        round ((m, t, sample_one pre (m, t, z))::accum) (m, t, z) left
-    | [] -> accum
-    in round [] (-1, -1, -1);;
+    let rec round accum pre sum = function
+    (m, t, z)::rlft -> 
+        let nz, info = sample_one pre (m, t, z) in
+        round ((m, t, nz)::accum) (m, t, z) (sum+.info) rlft
+    | [] -> (accum, sum)
+    in let lst, sum = round [] (-1, -1, -1) 0.0 its in
+    print_float sum;
+    print_endline "";
+    lst;;
 
-let _ = sample_round docs;;
+let doc_list = sample_round doc_list;;
