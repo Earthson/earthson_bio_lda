@@ -51,7 +51,7 @@ let mzerocnt = Array.make !dcnt 0;;
 
 let _ = print_endline "init_stat";;
 
-let _ = List.iter (fun x -> let m, t, z = x in
+let _ = List.iter (fun (m, t, z) -> 
             omcnt.(m).(z) <- omcnt.(m).(z) + 1;
             otcnt.(t).(z) <- otcnt.(t).(z) + 1;
             nk.(z) <- nk.(z) + 1;
@@ -70,14 +70,22 @@ let non_zero_list a =
 let _ =
     let rec iter i =
         if i == !dcnt then ()
-        else (mtpc.(i) <- non_zero_list omcnt.(i))
+        else 
+            begin
+            mtpc.(i) <- non_zero_list omcnt.(i);
+            iter (i+1)
+            end
     in iter 0;;
 
 (*non zero list of term topics*)
 let _=
     let rec iter i =
         if i == !tcnt then ()
-        else (ttpc.(i) <- non_zero_list otcnt.(i))
+        else 
+            begin
+            ttpc.(i) <- non_zero_list otcnt.(i);
+            iter (i+1)
+            end
     in iter 0;;
 
 let print_line out_chan a =
@@ -159,8 +167,6 @@ let sample_one (pm, pt, _) (m, t, z) =
         let _ = cnt1 1 in
         clear();
         to_set z (prob m t z);
-        let _ = cnt8 (List.length ttpc.(t)) in
-        let _ = cnt8 (List.length mtpc.(m)) in
         to_set_with_list ttpc.(t) m t;
         to_set_with_list mtpc.(m) m t;
         update_with_stack()
@@ -201,21 +207,16 @@ let sample_gibbs_array () =
     in let sum = round 0 (-1, -1, -1) 0.0 in
     println_float "sum" (sum/.(float_of_int !wcnt));;
 
-let show_cnts () =
-    Array.iteri (fun i x -> println_int ("cnt"^(string_of_int i)) x) counts;
-    Array.iteri (fun i x -> counts.(i) <- 0) counts;;
-
-
 let run_list () =
     let rec for_round i its pre_time =
         println_int "Round" i;
         let tmp = List.rev (sample_gibbs_list its) in
         if i mod 10 == 0 then save i;
-        if i < 100 then
+        if i <= 100 then
             begin
             let cur_time = (Sys.time()) in
             println_float "time" (cur_time -. pre_time);
-            show_cnts();
+            show_clear_cnts();
             for_round (i+1) tmp cur_time
             end
         else tmp
@@ -223,14 +224,14 @@ let run_list () =
 
 let run_array () = 
     let rec for_round i pre_time=
-        if i < 100 then
+        if i <= 100 then
             begin
             println_int "Round" i;
             sample_gibbs_array(); 
-            (*if i mod 10 == 0 then save i;*)
+            if i mod 10 == 0 then save i;
             let cur_time = (Sys.time()) in
             println_float "time" (cur_time -. pre_time);
-            show_cnts();
+            show_clear_cnts();
             for_round (i+1) cur_time
             end
         else ()

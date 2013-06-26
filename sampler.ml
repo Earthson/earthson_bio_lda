@@ -1,15 +1,5 @@
 open Testutils
 
-let println_float info x =
-    print_string (info^": ");
-    print_float x;
-    print_endline "";;
-
-let println_int info x =
-    print_string (info^": ");
-    print_int x;
-    print_endline "";;
-
 (*get sums of array a of length k*)
 let get_sums a k =
     let sums = Array.copy a in
