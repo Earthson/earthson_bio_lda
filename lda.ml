@@ -1,7 +1,7 @@
 open Sampler
+open Testutils
 
 let _ = Random.self_init ();;
-
 
 let kkk = 256;;
 let alpha = 50.0/.(float_of_int kkk);;
@@ -18,22 +18,6 @@ let with_i in_chan f =
 let with_o out_chan f =
     let ans = f out_chan in
     close_out out_chan; ans;;
-
-let counts = Array.make 10 0;;
-
-let countor n = fun () -> 
-        let ans = counts.(n) in
-        counts.(n) <- counts.(n) + 1;
-        ans;;
-
-let cnt0 = countor 0;;
-let cnt1 = countor 1;;
-let cnt2 = countor 2;;
-let cnt3 = countor 3;;
-let cnt4 = countor 4;;
-let cnt5 = countor 5;;
-let cnt6 = countor 6;;
-let cnt7 = countor 7;;
 
 let read_info in_chan =
     Scanf.fscanf in_chan "%i %i %i" (fun x y z -> dcnt := x; tcnt := y; wcnt := z)
@@ -132,13 +116,13 @@ let try_tpc_regen m t z nz =
     if z == nz then ()
     else
         begin
-        let _ = cnt2() in
+        let _ = cnt2 1 in
         if omcnt.(m).(nz) == 1 then
-            let _ = cnt3() in
+            let _ = cnt3 1 in
             mtpc.(m) <- (nz::mtpc.(m));
         if omcnt.(m).(z) == 0 then
             begin
-            let _ = cnt4() in
+            let _ = cnt4 1 in
             mzerocnt.(m) <- mzerocnt.(m) + 1;
             if mzerocnt.(m) > 2 then
                 begin
@@ -147,11 +131,11 @@ let try_tpc_regen m t z nz =
                 end
             end;
         if otcnt.(t).(nz) == 1 then
-            let _ = cnt5() in
+            let _ = cnt5 1 in
             ttpc.(t) <- (nz::ttpc.(t));
         if otcnt.(t).(z) == 0 then
             begin
-            let _ = cnt6() in
+            let _ = cnt6 1 in
             tzerocnt.(t) <- tzerocnt.(t) + 1;
             if tzerocnt.(t) > 2 then
                 begin
@@ -170,10 +154,10 @@ let sample_one (pm, pt, _) (m, t, z) =
     wcnt := !wcnt - 1;
     omcnt.(m).(z) <- omcnt.(m).(z) - 1;
     otcnt.(t).(z) <- otcnt.(t).(z) - 1;
-    let _ = cnt0() in
+    let _ = cnt0 1 in
     if pre == false then
         begin
-        let _ = cnt1() in
+        let _ = cnt1 1 in
         clear();
         to_set z (prob m t z);
         to_set_with_list ttpc.(t) m t;
@@ -224,7 +208,7 @@ let show_cnts () =
 let run_list () =
     let rec for_round i its pre_time =
         println_int "Round" i;
-        let tmp = sample_gibbs_list its in
+        let tmp = List.rev (sample_gibbs_list its) in
         if i mod 10 == 0 then save i;
         if i < 100 then
             begin

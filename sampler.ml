@@ -44,6 +44,7 @@ let multi_sampler k f =
     let stats = Array.make (Array.length avals) false in
     let mdfy_stack = Stack.create() in
     let sample_gen () = 
+        let _ = cnt7 Stack.length mdfy_stack in
         let r_v = Random.float sums.(0) in
         let rec for_iter i r_v =
             if i >= k then 0
