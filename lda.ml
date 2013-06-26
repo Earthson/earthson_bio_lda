@@ -159,8 +159,11 @@ let sample_gibbs_round its =
     println_float "sum" (sum/.(float_of_int !wcnt));
     lst;;
 
-let rec for_round i doc_list =
+
+let rec for_round i doc_list pre_time=
     if i < 100 then
-        for_round (i+1) (sample_gibbs_round doc_list)
+        let cur_time = (Sys.time()) in
+        println_float "time" (cur_time -. pre_time);
+        for_round (i+1) (sample_gibbs_round doc_list) cur_time
     else ()
-    in for_round 0 doc_list;;
+    in for_round 0 doc_list (Sys.time());;
