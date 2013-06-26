@@ -1,3 +1,13 @@
+let println_float info x =
+    print_string (info^": ");
+    print_float x;
+    print_endline "";;
+
+let println_int info x =
+    print_string (info^": ");
+    print_int x;
+    print_endline "";;
+
 (*get sums of array a of length k*)
 let get_sums a k =
     let sums = Array.copy a in
@@ -78,7 +88,7 @@ let multi_sampler k f =
                 deep_set ((idx-1)/2);
                 Stack.push idx mdfy_stack
                 end
-        in deep_set idx
+        in deep_set idx;
     in let clear () =
         let rec for_iter ss =
             if Stack.is_empty ss then ()
@@ -90,13 +100,10 @@ let multi_sampler k f =
                     update_sum tmp;
                     for_iter ss
                 end
-        in for_iter mdfy_stack
+        in for_iter mdfy_stack;
     in let show_sums () = sums
     in let show_stats () = stats
     in let show_vals () = avals
     in let sum_gen () = sums.(0)
     in sample_gen, set, to_set, update_with_stack, clear, sum_gen, show_sums, show_stats, show_vals;;
 
-(*testing*)
-let test_f = function i -> (float_of_int (i+1))*.0.3
-let gen, set, to_set, update_with_stack, clear, sum_gen, show_sums, show_stats, show_vals = multi_sampler 10 test_f;;

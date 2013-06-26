@@ -19,12 +19,13 @@ let with_o out_chan f =
     let ans = f out_chan in
     close_out out_chan; ans;;
 
-
 let countor n = let vvv = ref n in
     fun () -> 
-        if !vvv mod 100 == 0 then
+        let ans = !vvv in
+        if !vvv mod 100000 == 0 then
             print_endline (string_of_int !vvv); 
-        vvv := !vvv + 1;;
+        vvv := !vvv + 1;
+        ans;;
 
 let cnt = countor 0;;
 
@@ -62,7 +63,7 @@ let _ = List.iter (fun x -> let m, t, z = x in
             omcnt.(m).(z) <- omcnt.(m).(z) + 1;
             otcnt.(t).(z) <- otcnt.(t).(z) + 1;
             nk.(z) <- nk.(z) + 1;
-            nm.(m) <- nm.(m) + 1);;
+            nm.(m) <- nm.(m) + 1;) doc_list;;
 
 (*get non-zero position list for array*)
 let non_zero_list a =
@@ -117,7 +118,7 @@ let try_tpc_regen m t z nz =
     if otcnt.(t).(z) == 0 then
         ttpc.(t) <- (clear_zero ttpc.(t) otcnt.(t));;
 
-let info_len p = -.p*.(log p)/.(log 2.)
+let info_len p = -.(log p)/.(log 2.)
 
 let sample_one (pm, pt, _) (m, t, z) =
     let pre = if pm != m || pt != t then true else false in
@@ -144,18 +145,22 @@ let sample_one (pm, pt, _) (m, t, z) =
     set nz (prob m t nz);
     try_tpc_regen m t z nz;
     let tmpsum = 
-        ((float_of_int nm.(m))+.(float_of_int kkk)*.alpha)*.sum_gen()
-    in cnt();(nz, info_len tmpsum);;
+        sum_gen()/.((float_of_int nm.(m))+.(float_of_int kkk)*.alpha)
+    in (nz, info_len tmpsum);;
     
-let sample_round its = 
+let sample_gibbs_round its = 
     let rec round accum pre sum = function
     (m, t, z)::rlft -> 
         let nz, info = sample_one pre (m, t, z) in
         round ((m, t, nz)::accum) (m, t, z) (sum+.info) rlft
     | [] -> (accum, sum)
     in let lst, sum = round [] (-1, -1, -1) 0.0 its in
-    print_float sum;
-    print_endline "";
+    println_int "Round" (cnt());
+    println_float "sum" (sum/.(float_of_int !wcnt));
     lst;;
 
-let doc_list = sample_round doc_list;;
+let rec for_round i doc_list =
+    if i < 100 then
+        for_round (i+1) (sample_gibbs_round doc_list)
+    else ()
+    in for_round 0 doc_list;;
