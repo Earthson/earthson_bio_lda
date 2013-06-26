@@ -212,7 +212,7 @@ let run_list () =
         println_int "Round" i;
         let tmp = List.rev (sample_gibbs_list its) in
         if i mod 10 == 0 then save i;
-        if i <= 100 then
+        if i <= 1000 then
             begin
             let cur_time = (Sys.time()) in
             println_float "time" (cur_time -. pre_time);
@@ -224,7 +224,7 @@ let run_list () =
 
 let run_array () = 
     let rec for_round i pre_time=
-        if i <= 100 then
+        if i <= 1000 then
             begin
             println_int "Round" i;
             sample_gibbs_array(); 
