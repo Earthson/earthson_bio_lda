@@ -134,10 +134,11 @@ let try_tpc_regen m t z nz =
         begin
         let _ = cnt2() in
         if omcnt.(m).(nz) == 1 then
+            let _ = cnt3() in
             mtpc.(m) <- (nz::mtpc.(m));
         if omcnt.(m).(z) == 0 then
             begin
-            let _ = cnt3() in
+            let _ = cnt4() in
             mzerocnt.(m) <- mzerocnt.(m) + 1;
             if mzerocnt.(m) > 2 then
                 begin
@@ -146,10 +147,11 @@ let try_tpc_regen m t z nz =
                 end
             end;
         if otcnt.(t).(nz) == 1 then
+            let _ = cnt5() in
             ttpc.(t) <- (nz::ttpc.(t));
         if otcnt.(t).(z) == 0 then
             begin
-            let _ = cnt4() in
+            let _ = cnt6() in
             tzerocnt.(t) <- tzerocnt.(t) + 1;
             if tzerocnt.(t) > 2 then
                 begin
@@ -223,7 +225,7 @@ let run_list () =
     let rec for_round i its pre_time =
         println_int "Round" i;
         let tmp = sample_gibbs_list its in
-        save i;
+        if i mod 10 == 0 then save i;
         if i < 100 then
             begin
             let cur_time = (Sys.time()) in
@@ -240,7 +242,7 @@ let run_array () =
             begin
             println_int "Round" i;
             sample_gibbs_array(); 
-            save i;
+            (*if i mod 10 == 0 then save i;*)
             let cur_time = (Sys.time()) in
             println_float "time" (cur_time -. pre_time);
             show_cnts();
