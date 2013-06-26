@@ -19,25 +19,21 @@ let with_o out_chan f =
     let ans = f out_chan in
     close_out out_chan; ans;;
 
-let countor n = let vvv = ref n in
-    fun () -> 
-        let ans = !vvv in
-(*
-        if !vvv mod 100000 == 0 then
-            print_endline (string_of_int !vvv); 
-*)
-        vvv := !vvv + 1;
+let counts = Array.make 10 0;;
+
+let countor n = fun () -> 
+        let ans = counts.(n) in
+        counts.(n) <- counts.(n) + 1;
         ans;;
 
-let cnt = countor 0;;
 let cnt0 = countor 0;;
-let cnt1 = countor 0;;
-let cnt2 = countor 0;;
-let cnt3 = countor 0;;
-let cnt4 = countor 0;;
-let cnt5 = countor 0;;
-let cnt6 = countor 0;;
-let cnt7 = countor 0;;
+let cnt1 = countor 1;;
+let cnt2 = countor 2;;
+let cnt3 = countor 3;;
+let cnt4 = countor 4;;
+let cnt5 = countor 5;;
+let cnt6 = countor 6;;
+let cnt7 = countor 7;;
 
 let read_info in_chan =
     Scanf.fscanf in_chan "%i %i %i" (fun x y z -> dcnt := x; tcnt := y; wcnt := z)
@@ -101,6 +97,17 @@ let _=
         else (ttpc.(i) <- non_zero_list otcnt.(i))
     in iter 0;;
 
+let print_line out_chan a =
+    Array.iter (fun x -> Printf.fprintf out_chan "%d " x) a;
+    Printf.fprintf out_chan "\n";;
+
+let save rd =
+    with_o (open_out ("save/r"^(string_of_int rd))) (fun out_chan ->
+        print_endline "Saving";
+        Printf.fprintf out_chan "%d %d %d\n" kkk !dcnt !tcnt;
+        Array.iter (fun x -> print_line out_chan x) omcnt;
+        Array.iter (fun x -> print_line out_chan x) otcnt
+        );;
 
 let default_p z = beta*.alpha/.((float_of_int nk.(z)+.beta*.(float_of_int !tcnt)));;
 
@@ -173,7 +180,6 @@ let sample_one (pm, pt, _) (m, t, z) =
         end
     else set z (prob m t z);
     let nz = sample_gen() in
-    let nz = z in (*for test*)
     otcnt.(t).(nz) <- otcnt.(t).(nz) + 1;
     omcnt.(m).(nz) <- omcnt.(m).(nz) + 1;
     wcnt := !wcnt + 1;
@@ -192,7 +198,6 @@ let sample_gibbs_list its =
         round ((m, t, nz)::accum) (m, t, z) (sum+.info) rlft
     | [] -> (accum, sum)
     in let lst, sum = round [] (-1, -1, -1) 0.0 its in
-    println_int "Round" (cnt());
     println_float "sum" (sum/.(float_of_int !wcnt));
     lst;;
 
@@ -207,42 +212,42 @@ let sample_gibbs_array () =
             round (i+1) (m, t, z) (sum+.info)
             end
     in let sum = round 0 (-1, -1, -1) 0.0 in
-    println_int "Round" (cnt());
     println_float "sum" (sum/.(float_of_int !wcnt));;
+
+let show_cnts () =
+    Array.iteri (fun i x -> println_int ("cnt"^(string_of_int i)) x) counts;
+    Array.iteri (fun i x -> counts.(i) <- 0) counts;;
 
 
 let run_list () =
     let rec for_round i its pre_time =
+        println_int "Round" i;
         let tmp = sample_gibbs_list its in
+        save i;
         if i < 100 then
             begin
             let cur_time = (Sys.time()) in
             println_float "time" (cur_time -. pre_time);
-            println_int "cnt0" (cnt0());
-            println_int "cnt1" (cnt1());
-            println_int "cnt2" (cnt2());
-            println_int "cnt3" (cnt3());
-            println_int "cnt4" (cnt4());
+            show_cnts();
             for_round (i+1) tmp cur_time
             end
         else tmp
         in for_round 0 doc_list (Sys.time());;
 
-let _ = run_list();;
-
 let run_array () = 
     let rec for_round i pre_time=
         if i < 100 then
             begin
+            println_int "Round" i;
             sample_gibbs_array(); 
+            save i;
             let cur_time = (Sys.time()) in
             println_float "time" (cur_time -. pre_time);
-            println_int "cnt0" (cnt0());
-            println_int "cnt1" (cnt1());
-            println_int "cnt2" (cnt2());
-            println_int "cnt3" (cnt3());
-            println_int "cnt4" (cnt4());
+            show_cnts();
             for_round (i+1) cur_time
             end
         else ()
         in for_round 0 (Sys.time());;
+
+let _ = run_array();;
+(*let _ = run_list();;*)
