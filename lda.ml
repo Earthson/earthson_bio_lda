@@ -22,12 +22,22 @@ let with_o out_chan f =
 let countor n = let vvv = ref n in
     fun () -> 
         let ans = !vvv in
+(*
         if !vvv mod 100000 == 0 then
             print_endline (string_of_int !vvv); 
+*)
         vvv := !vvv + 1;
         ans;;
 
 let cnt = countor 0;;
+let cnt0 = countor 0;;
+let cnt1 = countor 0;;
+let cnt2 = countor 0;;
+let cnt3 = countor 0;;
+let cnt4 = countor 0;;
+let cnt5 = countor 0;;
+let cnt6 = countor 0;;
+let cnt7 = countor 0;;
 
 let read_info in_chan =
     Scanf.fscanf in_chan "%i %i %i" (fun x y z -> dcnt := x; tcnt := y; wcnt := z)
@@ -49,6 +59,7 @@ with_i (open_in "data/info") read_info;;
 
 (*read docs*)
 let doc_list = with_i (open_in "data/doc_list") read_docs;;
+let doc_array = Array.of_list doc_list;;
 (*init matrixs of count*)
 let otcnt = Array.init !tcnt (fun x -> Array.make kkk 0);;
 let omcnt = Array.init !dcnt (fun x -> Array.make kkk 0);;
@@ -56,6 +67,8 @@ let nk = Array.make kkk 0;;
 let nm = Array.make !dcnt 0;;
 let ttpc = Array.make !tcnt [];;
 let mtpc = Array.make !dcnt [];;
+let tzerocnt = Array.make !tcnt 0;;
+let mzerocnt = Array.make !dcnt 0;;
 
 let _ = print_endline "init_stat";;
 
@@ -109,26 +122,49 @@ let clear_zero tpclist tpcstat =
     in for_iter [] tpclist;;
 
 let try_tpc_regen m t z nz = 
-    if omcnt.(m).(nz) == 1 then
-        mtpc.(m) <- (nz::mtpc.(m));
-    if omcnt.(m).(z) == 0 then
-        mtpc.(m) <- (clear_zero mtpc.(m) omcnt.(m));
-    if otcnt.(t).(nz) == 1 then
-        ttpc.(t) <- (nz::ttpc.(t));
-    if otcnt.(t).(z) == 0 then
-        ttpc.(t) <- (clear_zero ttpc.(t) otcnt.(t));;
+    if z == nz then ()
+    else
+        begin
+        let _ = cnt2() in
+        if omcnt.(m).(nz) == 1 then
+            mtpc.(m) <- (nz::mtpc.(m));
+        if omcnt.(m).(z) == 0 then
+            begin
+            let _ = cnt3() in
+            mzerocnt.(m) <- mzerocnt.(m) + 1;
+            if mzerocnt.(m) > 2 then
+                begin
+                mtpc.(m) <- (clear_zero mtpc.(m) omcnt.(m));
+                mzerocnt.(m) <- 0
+                end
+            end;
+        if otcnt.(t).(nz) == 1 then
+            ttpc.(t) <- (nz::ttpc.(t));
+        if otcnt.(t).(z) == 0 then
+            begin
+            let _ = cnt4() in
+            tzerocnt.(t) <- tzerocnt.(t) + 1;
+            if tzerocnt.(t) > 2 then
+                begin
+                ttpc.(t) <- (clear_zero ttpc.(t) otcnt.(t));
+                tzerocnt.(t) <- 0
+                end
+            end
+        end;;
 
 let info_len p = -.(log p)/.(log 2.)
 
 let sample_one (pm, pt, _) (m, t, z) =
-    let pre = if pm != m || pt != t then true else false in
+    let pre = if pm != m || pt != t then false else true in
     nk.(z) <- nk.(z) - 1;
     nm.(m) <- nm.(m) - 1;
     wcnt := !wcnt - 1;
     omcnt.(m).(z) <- omcnt.(m).(z) - 1;
     otcnt.(t).(z) <- otcnt.(t).(z) - 1;
+    let _ = cnt0() in
     if pre == false then
         begin
+        let _ = cnt1() in
         clear();
         to_set z (prob m t z);
         to_set_with_list ttpc.(t) m t;
@@ -137,6 +173,7 @@ let sample_one (pm, pt, _) (m, t, z) =
         end
     else set z (prob m t z);
     let nz = sample_gen() in
+    let nz = z in (*for test*)
     otcnt.(t).(nz) <- otcnt.(t).(nz) + 1;
     omcnt.(m).(nz) <- omcnt.(m).(nz) + 1;
     wcnt := !wcnt + 1;
@@ -148,7 +185,7 @@ let sample_one (pm, pt, _) (m, t, z) =
         sum_gen()/.((float_of_int nm.(m))+.(float_of_int kkk)*.alpha)
     in (nz, info_len tmpsum);;
     
-let sample_gibbs_round its = 
+let sample_gibbs_list its = 
     let rec round accum pre sum = function
     (m, t, z)::rlft -> 
         let nz, info = sample_one pre (m, t, z) in
@@ -159,11 +196,53 @@ let sample_gibbs_round its =
     println_float "sum" (sum/.(float_of_int !wcnt));
     lst;;
 
+let sample_gibbs_array () =
+    let rec round i pre sum =
+        if i == !wcnt then sum
+        else
+            begin
+            let (m, t, z) = doc_array.(i) in
+            let nz, info = sample_one pre (m, t, z) in
+            doc_array.(i) <- (m, t, nz);
+            round (i+1) (m, t, z) (sum+.info)
+            end
+    in let sum = round 0 (-1, -1, -1) 0.0 in
+    println_int "Round" (cnt());
+    println_float "sum" (sum/.(float_of_int !wcnt));;
 
-let rec for_round i doc_list pre_time=
-    if i < 100 then
-        let cur_time = (Sys.time()) in
-        println_float "time" (cur_time -. pre_time);
-        for_round (i+1) (sample_gibbs_round doc_list) cur_time
-    else ()
-    in for_round 0 doc_list (Sys.time());;
+
+let run_list () =
+    let rec for_round i its pre_time =
+        let tmp = sample_gibbs_list its in
+        if i < 100 then
+            begin
+            let cur_time = (Sys.time()) in
+            println_float "time" (cur_time -. pre_time);
+            println_int "cnt0" (cnt0());
+            println_int "cnt1" (cnt1());
+            println_int "cnt2" (cnt2());
+            println_int "cnt3" (cnt3());
+            println_int "cnt4" (cnt4());
+            for_round (i+1) tmp cur_time
+            end
+        else tmp
+        in for_round 0 doc_list (Sys.time());;
+
+let _ = run_list();;
+
+let run_array () = 
+    let rec for_round i pre_time=
+        if i < 100 then
+            begin
+            sample_gibbs_array(); 
+            let cur_time = (Sys.time()) in
+            println_float "time" (cur_time -. pre_time);
+            println_int "cnt0" (cnt0());
+            println_int "cnt1" (cnt1());
+            println_int "cnt2" (cnt2());
+            println_int "cnt3" (cnt3());
+            println_int "cnt4" (cnt4());
+            for_round (i+1) cur_time
+            end
+        else ()
+        in for_round 0 (Sys.time());;
