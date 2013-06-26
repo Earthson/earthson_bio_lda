@@ -22,7 +22,6 @@ let with_o out_chan f =
 let read_info in_chan =
     Scanf.fscanf in_chan "%i %i %i" (fun x y z -> dcnt := x; tcnt := y; wcnt := z)
 
-
 let read_docs in_chan = 
     let from_line = fun line -> Scanf.sscanf line "%i %i" (fun x y -> (x, y, Random.int kkk)) in
     let rec iter_read accum = 
@@ -160,6 +159,8 @@ let sample_one (pm, pt, _) (m, t, z) =
         let _ = cnt1 1 in
         clear();
         to_set z (prob m t z);
+        let _ = cnt8 (List.length ttpc.(t)) in
+        let _ = cnt8 (List.length mtpc.(m)) in
         to_set_with_list ttpc.(t) m t;
         to_set_with_list mtpc.(m) m t;
         update_with_stack()
