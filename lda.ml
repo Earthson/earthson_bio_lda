@@ -237,7 +237,6 @@ let reduce_round lst =
     println_int "before_reduce" (List.length lst);
     let base_dist = doc_dist (!dcnt-1) in
     let threshold_dis = kl_dis base_dist (uniform_k kkk) in
-    println_float "b" threshold_dis;
     let ans_lst = 
         let rec for_iter accum = function
         [] -> accum
@@ -245,8 +244,7 @@ let reduce_round lst =
             let w_dist = word_dist m t in
             let cur_dis = kl_dis base_dist w_dist in
             if cur_dis > threshold_dis then
-                (println_float "w" cur_dis;
-                for_iter accum rlft)
+                for_iter accum rlft
             else for_iter ((m, t, z)::accum) rlft
         in List.rev (for_iter [] lst)
     in 
@@ -288,7 +286,7 @@ let run_list () =
             let cur_time = (Sys.time()) in
             println_float "time" (cur_time -. pre_time);
             show_clear_cnts();
-            let step = 3 in
+            let step = 50 in
             if i mod step == (step-1) then 
                 for_round (i+1) (reduce_round tmp) cur_time
             else
