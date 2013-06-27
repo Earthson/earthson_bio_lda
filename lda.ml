@@ -22,8 +22,8 @@ let with_o out_chan f =
 let read_info in_chan =
     Scanf.fscanf in_chan "%i %i %i" (fun x y z -> dcnt := x; tcnt := y; wcnt := z)
 
-let read_docs in_chan = 
-    let from_line = fun line -> Scanf.sscanf line "%i %i" (fun x y -> (x, y, Random.int kkk)) in
+let read_docs lst in_chan = 
+    let from_line = fun line -> Scanf.sscanf line "%i %i" (fun x y -> ((if x >= 0 then x else !dcnt), y, Random.int kkk)) in
     let rec iter_read accum = 
         let stat, line = 
             try (true, (input_line in_chan))
@@ -31,13 +31,15 @@ let read_docs in_chan =
         in if stat == true then
             iter_read ((from_line line)::accum)
             else accum
-    in iter_read [];;
+    in iter_read lst;;
 
 (*read dcnt, tcnt, wcnt*)
 with_i (open_in "data/info") read_info;;
 
 (*read docs*)
-let doc_list = with_i (open_in "data/doc_list") read_docs;;
+let doc_list = with_i (open_in "data/doc_list") (read_docs []);;
+let doc_list = with_i (open_in "data/reduced_sample") (read_docs doc_list);;
+dcnt := !dcnt + 1;;
 let doc_array = Array.of_list doc_list;;
 (*init matrixs of count*)
 let otcnt = Array.init !tcnt (fun x -> Array.make kkk 0);;
