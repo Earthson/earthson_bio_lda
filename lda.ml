@@ -285,7 +285,8 @@ let run_list () =
             let cur_time = (Sys.time()) in
             println_float "time" (cur_time -. pre_time);
             show_clear_cnts();
-            if i mod 50 == 49 then 
+            let step = 20 in
+            if i mod step == (step-1) then 
                 for_round (i+1) (reduce_round tmp) cur_time
             else
                 for_round (i+1) tmp cur_time
