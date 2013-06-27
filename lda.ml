@@ -234,6 +234,7 @@ let sample_one (pm, pt, _) (m, t, z) =
 
 
 let reduce_round lst =
+    println_int "before_reduce" List.length lst;
     let base_dist = doc_dist (!dcnt-1) in
     let threshold_dis = kl_dis base_dist (uniform_k kkk) in
     let ans_lst = 
@@ -247,7 +248,7 @@ let reduce_round lst =
             else for_iter ((m, t, z)::accum) rlft
         in List.rev (for_iter [] lst)
     in 
-    println_int "len_reduced" (List.length ans_lst);
+    println_int "after_reduce" (List.length ans_lst);
     re_stat_init ans_lst;
     ans_lst;;
 
@@ -285,7 +286,7 @@ let run_list () =
             let cur_time = (Sys.time()) in
             println_float "time" (cur_time -. pre_time);
             show_clear_cnts();
-            let step = 20 in
+            let step = 3 in
             if i mod step == (step-1) then 
                 for_round (i+1) (reduce_round tmp) cur_time
             else
