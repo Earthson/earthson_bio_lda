@@ -107,6 +107,22 @@ let default_p z = beta*.alpha/.((float_of_int nk.(z)+.beta*.(float_of_int !tcnt)
 let prob m t z = 
         ((float_of_int otcnt.(t).(z))+.beta)*.((float_of_int omcnt.(m).(z))+.alpha)/.((float_of_int nk.(z)+.beta*.(float_of_int !tcnt)));;
 
+let doc_dist m =
+    Array.init kkk (fun x -> 
+        ((float_of_int omcnt.(m).(x))+.alpha)/.((float_of_int nm.(m))+.((float_of_int kkk)*.alpha)));;
+
+let word_dist m t =
+    let ans = Array.init kkk (fun x -> prob m t x) in
+    let sum = Array.fold_left (fun x y -> x+.y) 0.0 ans in
+    Array.iteri (fun i x -> ans.(i) <- (x/.sum)) ans;
+    ans;;
+
+let kl_dis px py =
+    let rec for_iter ans i = 
+        if i == Array.length px then ans
+        else for_iter (ans+.px.(i)*.(log px.(i))/.py.(i)/.(log 2.0)) (i+1)
+    in for_iter 0.0 0;;
+
 let sample_gen, set, to_set, update_with_stack, clear, sum_gen, show_sums, show_stats, show_vals = multi_sampler kkk default_p;;
 
 let to_set_with_list lst m t =
@@ -239,21 +255,6 @@ let run_array () =
         else ()
         in for_round 0 (Sys.time());;
 
-let _ = run_array();;
-(*let _ = run_list();;*)
+(*let _ = run_array();;*)
+let _ = run_list();;
 
-let doc_dist m =
-    Array.init kkk (fun x -> 
-        ((float_of_int omcnt.(m))+.alpha)/.((float_of_int nm.(m))+.((float_of_int kkk)*.alpha)));;
-
-let word_dist m t =
-    let ans = Array.init kkk (fun x -> prob m t x) in
-    let sum = Array.fold_left (fun x y -> x+.y) in
-    Array.iteri (fun i x -> ans.(i) <- x/.sum) ans;
-    ans;;
-
-let kl_dis px py =
-    let rec for_iter ans i = 
-        if i == Array.length px then ans
-        else for_iter (ans+.px.(i)*.(log px.(i))/.py.(i)/.(log 2.0)) (i+1)
-    in for_iter 0.0 0;;
