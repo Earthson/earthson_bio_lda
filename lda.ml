@@ -138,8 +138,10 @@ let prob m t z =
         ((float_of_int otcnt.(t).(z))+.beta)*.((float_of_int omcnt.(m).(z))+.alpha)/.((float_of_int nk.(z)+.beta*.(float_of_int !tcnt)));;
 
 let doc_dist m =
-    Array.init kkk (fun x -> 
-        ((float_of_int omcnt.(m).(x))+.alpha)/.((float_of_int nm.(m))+.((float_of_int kkk)*.alpha)));;
+    let ans = Array.init kkk (fun x -> 
+        ((float_of_int omcnt.(m).(x))+.alpha)/.((float_of_int nm.(m))+.((float_of_int kkk)*.alpha))) in
+    println_float "sum" (Array.fold_left (fun x y -> x+.y) 0.0 ans);
+    ans;;
 
 let word_dist m t =
     let ans = Array.init kkk (fun x -> prob m t x) in
@@ -243,7 +245,7 @@ let reduce_round lst =
         |(m, t, z)::rlft -> 
             let w_dist = word_dist m t in
             let cur_dis = kl_dis base_dist w_dist in
-            if cur_dis > threshold_dis then
+            if cur_dis > 2.718281828459*.threshold_dis then
                 for_iter accum rlft
             else for_iter ((m, t, z)::accum) rlft
         in List.rev (for_iter [] lst)
@@ -286,8 +288,8 @@ let run_list () =
             let cur_time = (Sys.time()) in
             println_float "time" (cur_time -. pre_time);
             show_clear_cnts();
-            let step = 50 in
-            if i mod step == (step-1) then 
+            let step = 100 in
+            if i mod step == (step-1) && i <= 300 then 
                 for_round (i+1) (reduce_round tmp) cur_time
             else
                 for_round (i+1) tmp cur_time
