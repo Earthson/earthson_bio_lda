@@ -234,7 +234,7 @@ let sample_one (pm, pt, _) (m, t, z) =
 
 
 let reduce_round lst =
-    println_int "before_reduce" List.length lst;
+    println_int "before_reduce" (List.length lst);
     let base_dist = doc_dist (!dcnt-1) in
     let threshold_dis = kl_dis base_dist (uniform_k kkk) in
     let ans_lst = 
