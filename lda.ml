@@ -3,7 +3,7 @@ open Testutils
 
 let _ = Random.self_init ();;
 
-let kkk = 256;;
+let kkk = 64;;
 let alpha = 50.0/.(float_of_int kkk);;
 let beta = 0.01;;
 
