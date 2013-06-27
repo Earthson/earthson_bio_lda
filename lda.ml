@@ -11,6 +11,9 @@ let wcnt = ref 0;;
 let tcnt = ref 0;;
 let dcnt = ref 0;;
 
+let uniform_k k =
+    Array.make k (1.0/.(float_of_int k));;
+
 let with_i in_chan f =
     let ans = f in_chan in
     close_in in_chan; ans;;
@@ -51,13 +54,27 @@ let mtpc = Array.make !dcnt [];;
 let tzerocnt = Array.make !tcnt 0;;
 let mzerocnt = Array.make !dcnt 0;;
 
-let _ = print_endline "init_stat";;
 
-let _ = List.iter (fun (m, t, z) -> 
+let clear_array_int a =
+    Array.iteri (fun i x -> a.(i) <- 0) a;;
+
+let clear_array_float a =
+    Array.iteri (fun i x -> a.(i) <- 0.0) a;;
+
+
+let clear_stats () =
+    Array.iter (fun x -> clear_array_int x) omcnt;
+    Array.iter (fun x -> clear_array_int x) otcnt;
+    clear_array_int nk;
+    clear_array_int nm;;
+
+
+let do_init_stat d_lst = 
+    List.iter (fun (m, t, z) -> 
             omcnt.(m).(z) <- omcnt.(m).(z) + 1;
             otcnt.(t).(z) <- otcnt.(t).(z) + 1;
             nk.(z) <- nk.(z) + 1;
-            nm.(m) <- nm.(m) + 1;) doc_list;;
+            nm.(m) <- nm.(m) + 1) d_lst;;
 
 (*get non-zero position list for array*)
 let non_zero_list a =
@@ -69,7 +86,7 @@ let non_zero_list a =
     in for_i 0 [];;
 
 (*non zero list of documents topics*)
-let _ =
+let get_nonzerod () =
     let rec iter i =
         if i == !dcnt then ()
         else 
@@ -80,7 +97,7 @@ let _ =
     in iter 0;;
 
 (*non zero list of term topics*)
-let _=
+let get_nonzerot () =
     let rec iter i =
         if i == !tcnt then ()
         else 
@@ -89,6 +106,19 @@ let _=
             iter (i+1)
             end
     in iter 0;;
+
+let _ = do_init_stat doc_list;;
+let _ = get_nonzerod ();;
+let _ = get_nonzerot ();;
+
+
+let re_stat_init d_lst =
+    print_endline "init_stat";
+    clear_stats ();
+    do_init_stat d_lst;
+    get_nonzerod ();
+    get_nonzerot ();;
+
 
 let print_line out_chan a =
     Array.iter (fun x -> Printf.fprintf out_chan "%d " x) a;
@@ -201,6 +231,26 @@ let sample_one (pm, pt, _) (m, t, z) =
     let tmpsum = 
         sum_gen()/.((float_of_int nm.(m))+.(float_of_int kkk)*.alpha)
     in (nz, info_len tmpsum);;
+
+
+let reduce_round lst =
+    let base_dist = doc_dist (!dcnt-1) in
+    let threshold_dis = kl_dis base_dist (uniform_k kkk) in
+    let ans_lst = 
+        let rec for_iter accum = function
+        [] -> accum
+        |(m, t, z)::rlft -> 
+            let w_dist = word_dist m t in
+            let cur_dis = kl_dis base_dist w_dist in
+            if cur_dis > threshold_dis then
+                for_iter accum rlft
+            else for_iter ((m, t, z)::accum) rlft
+        in List.rev (for_iter [] lst)
+    in 
+    println_int "len_reduced" (List.length ans_lst);
+    re_stat_init ans_lst;
+    ans_lst;;
+
     
 let sample_gibbs_list its = 
     let rec round accum pre sum = function
@@ -235,7 +285,10 @@ let run_list () =
             let cur_time = (Sys.time()) in
             println_float "time" (cur_time -. pre_time);
             show_clear_cnts();
-            for_round (i+1) tmp cur_time
+            if i mod 50 == 49 then 
+                for_round (i+1) (reduce_round tmp) cur_time
+            else
+                for_round (i+1) tmp cur_time
             end
         else tmp
         in for_round 0 doc_list (Sys.time());;
