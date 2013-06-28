@@ -10,6 +10,8 @@ with open("sample_words") as ff:
     ws = [e for e in ws if e in to_id]
     ids = [to_id[e] for e in ws]
     print(ws)
+    while len(ids) < 1000:
+        ids += ids
     with open("reduced_sample", "w") as rd:
         #print(len(ws), file=rd)
         print('\n'.join("-1 "+str(each) for each in ids), file=rd)

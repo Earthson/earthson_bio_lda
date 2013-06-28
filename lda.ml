@@ -3,7 +3,7 @@ open Testutils
 
 let _ = Random.self_init ();;
 
-let kkk = 64;;
+let kkk = 256;;
 let alpha = 50.0/.(float_of_int kkk);;
 let beta = 0.01;;
 
@@ -245,7 +245,7 @@ let reduce_round lst =
         |(m, t, z)::rlft -> 
             let w_dist = word_dist m t in
             let cur_dis = kl_dis base_dist w_dist in
-            if cur_dis > 2.718281828459*.threshold_dis then
+            if cur_dis > 3.14159265358979323846264338327950288*.threshold_dis then
                 for_iter accum rlft
             else for_iter ((m, t, z)::accum) rlft
         in List.rev (for_iter [] lst)
@@ -283,13 +283,13 @@ let run_list () =
         println_int "Round" i;
         let tmp = List.rev (sample_gibbs_list its) in
         if i mod 10 == 0 then save i;
-        if i <= 1000 then
+        if i <= 3000 then
             begin
             let cur_time = (Sys.time()) in
             println_float "time" (cur_time -. pre_time);
             show_clear_cnts();
-            let step = 100 in
-            if i mod step == (step-1) && i <= 300 then 
+            let step = 300 in
+            if i mod step == (step-1) && i <= 1000 then 
                 for_round (i+1) (reduce_round tmp) cur_time
             else
                 for_round (i+1) tmp cur_time
