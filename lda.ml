@@ -238,21 +238,34 @@ let sample_one (pm, pt, _) (m, t, z) =
 let reduce_round lst =
     println_int "before_reduce" (List.length lst);
     let base_dist = doc_dist (!dcnt-1) in
-    let threshold_dis = kl_dis base_dist (uniform_k kkk) in
+    let uniform_dis = kl_dis base_dist (uniform_k kkk) in
     let ans_lst = 
         let rec for_iter accum = function
         [] -> accum
         |(m, t, z)::rlft -> 
             let w_dist = word_dist m t in
             let cur_dis = kl_dis base_dist w_dist in
-            if cur_dis > 3.14159265358979323846264338327950288*.threshold_dis then
-                for_iter accum rlft
-            else for_iter ((m, t, z)::accum) rlft
-        in List.rev (for_iter [] lst)
+            for_iter ((m, t, z, cur_dis)::accum) rlft
+        in for_iter [] lst
     in 
-    println_int "after_reduce" (List.length ans_lst);
-    re_stat_init ans_lst;
-    ans_lst;;
+    let _ = with_o (open_out ("save/wdist"^(string_of_int (cnt9 1)))) (fun out_chan ->
+                List.iter (fun (_, _, _, dis) -> Printf.fprintf out_chan "%f\n" dis) ans_lst)
+    in
+    let sum, len = List.fold_left (fun (x, l) (_, _, _, y) -> (x+.y, l+1)) (0.0, 0) ans_lst in
+    let avr = sum/.(float_of_int len) in
+    let ans =
+        let rec for_iter accum = function
+            [] -> accum
+            | (m, t, z, dis)::rlft ->
+                if dis > avr then
+                    for_iter accum rlft
+                else for_iter ((m, t, z)::accum) rlft
+        in for_iter [] ans_lst
+    in
+    println_int "after_reduce" (List.length ans);
+    println_float "norm" uniform_dis;
+    re_stat_init ans;
+    ans;;
 
     
 let sample_gibbs_list its = 
@@ -282,14 +295,14 @@ let run_list () =
     let rec for_round i its pre_time =
         println_int "Round" i;
         let tmp = List.rev (sample_gibbs_list its) in
-        if i mod 10 == 0 then save i;
+        if i mod 20 == 0 then save i;
         if i <= 3000 then
             begin
             let cur_time = (Sys.time()) in
             println_float "time" (cur_time -. pre_time);
             show_clear_cnts();
             let step = 300 in
-            if i mod step == (step-1) && i <= 1000 then 
+            if i mod step == (step-1) && i <= 1500 then 
                 for_round (i+1) (reduce_round tmp) cur_time
             else
                 for_round (i+1) tmp cur_time
