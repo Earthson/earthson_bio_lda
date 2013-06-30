@@ -132,14 +132,14 @@ let save rd =
         Array.iter (fun x -> print_line out_chan x) otcnt
         );;
 
-let default_p z = beta*.alpha/.((float_of_int nk.(z)+.beta*.(float_of_int !tcnt)));;
+let default_p z = beta*.alpha/.((float_of_int nk.(z))+.beta*.(float_of_int !tcnt));;
 
 let prob m t z = 
-        ((float_of_int otcnt.(t).(z))+.beta)*.((float_of_int omcnt.(m).(z))+.alpha)/.((float_of_int nk.(z)+.beta*.(float_of_int !tcnt)));;
+        ((float_of_int otcnt.(t).(z))+.beta)*.((float_of_int omcnt.(m).(z))+.alpha)/.((float_of_int nk.(z))+.beta*.(float_of_int !tcnt));;
 
 let doc_dist m =
     let ans = Array.init kkk (fun x -> 
-        ((float_of_int omcnt.(m).(x))+.alpha)/.((float_of_int nm.(m))+.((float_of_int kkk)*.alpha))) in
+        ((float_of_int omcnt.(m).(x))+.alpha)/.((float_of_int nm.(m))+.(float_of_int kkk)*.alpha)) in
     println_float "sum" (Array.fold_left (fun x y -> x+.y) 0.0 ans);
     ans;;
 
