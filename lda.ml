@@ -173,13 +173,10 @@ let try_tpc_regen m t z nz =
     if z == nz then ()
     else
         begin
-        let _ = cnt2 1 in
         if omcnt.(m).(nz) == 1 then
-            let _ = cnt3 1 in
             mtpc.(m) <- (nz::mtpc.(m));
         if omcnt.(m).(z) == 0 then
             begin
-            let _ = cnt4 1 in
             mzerocnt.(m) <- mzerocnt.(m) + 1;
             if mzerocnt.(m) > 2 then
                 begin
@@ -188,11 +185,9 @@ let try_tpc_regen m t z nz =
                 end
             end;
         if otcnt.(t).(nz) == 1 then
-            let _ = cnt5 1 in
             ttpc.(t) <- (nz::ttpc.(t));
         if otcnt.(t).(z) == 0 then
             begin
-            let _ = cnt6 1 in
             tzerocnt.(t) <- tzerocnt.(t) + 1;
             if tzerocnt.(t) > 2 then
                 begin
@@ -211,10 +206,8 @@ let sample_one (pm, pt, _) (m, t, z) =
     wcnt := !wcnt - 1;
     omcnt.(m).(z) <- omcnt.(m).(z) - 1;
     otcnt.(t).(z) <- otcnt.(t).(z) - 1;
-    let _ = cnt0 1 in
     if pre == false then
         begin
-        let _ = cnt1 1 in
         clear();
         to_set z (prob m t z);
         to_set_with_list ttpc.(t) m t;
@@ -248,7 +241,7 @@ let reduce_round lst =
             for_iter ((m, t, z, cur_dis)::accum) rlft
         in for_iter [] lst
     in 
-    let _ = with_o (open_out ("save/wdist"^(string_of_int (cnt9 1)))) (fun out_chan ->
+    let _ = with_o (open_out ("save/wdist"^(string_of_int (ncnts.(9) 1)))) (fun out_chan ->
                 List.iter (fun (_, _, _, dis) -> Printf.fprintf out_chan "%f\n" dis) ans_lst)
     in
     let sum, len = List.fold_left (fun (x, l) (_, _, _, y) -> (x+.y, l+1)) (0.0, 0) ans_lst in
@@ -259,7 +252,7 @@ let reduce_round lst =
             | (m, t, z, dis)::rlft ->
                 if dis > avr then
                     for_iter accum rlft
-                else for_iter ((m, t, z)::accum) rlft
+                else for_iter ((m, t, Random.int kkk)::accum) rlft
         in for_iter [] ans_lst
     in
     println_int "after_reduce" (List.length ans);
@@ -296,13 +289,13 @@ let run_list () =
         println_int "Round" i;
         let tmp = List.rev (sample_gibbs_list its) in
         if i mod 20 == 0 then save i;
-        if i <= 3000 then
+        if i <= 5000 then
             begin
             let cur_time = (Sys.time()) in
             println_float "time" (cur_time -. pre_time);
             show_clear_cnts();
-            let step = 300 in
-            if i mod step == (step-1) && i <= 1500 then 
+            let step = 600 in
+            if i mod step == (step-1) && i <= 3000 then 
                 for_round (i+1) (reduce_round tmp) cur_time
             else
                 for_round (i+1) tmp cur_time
@@ -319,7 +312,7 @@ let run_array () =
             if i mod 10 == 0 then save i;
             let cur_time = (Sys.time()) in
             println_float "time" (cur_time -. pre_time);
-            show_clear_cnts();
+            (*show_clear_cnts();*)
             for_round (i+1) cur_time
             end
         else ()
