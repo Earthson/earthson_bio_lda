@@ -138,10 +138,8 @@ let prob m t z =
         ((float_of_int otcnt.(t).(z))+.beta)*.((float_of_int omcnt.(m).(z))+.alpha)/.((float_of_int nk.(z))+.beta*.(float_of_int !tcnt));;
 
 let doc_dist m =
-    let ans = Array.init kkk (fun x -> 
-        ((float_of_int omcnt.(m).(x))+.alpha)/.((float_of_int nm.(m))+.(float_of_int kkk)*.alpha)) in
-    println_float "sum" (Array.fold_left (fun x y -> x+.y) 0.0 ans);
-    ans;;
+    Array.init kkk (fun x -> 
+        ((float_of_int omcnt.(m).(x))+.alpha)/.((float_of_int nm.(m))+.(float_of_int kkk)*.alpha))
 
 let word_dist m t =
     let ans = Array.init kkk (fun x -> prob m t x) in
@@ -155,7 +153,7 @@ let kl_dis px py =
         else for_iter (ans+.px.(i)*.(log (px.(i)/.py.(i)))/.(log 2.0)) (i+1)
     in for_iter 0.0 0;;
 
-let sample_gen, set, to_set, update_with_stack, clear, sum_gen, show_sums, show_stats, show_vals = multi_sampler kkk default_p;;
+let sample_gen, set, to_set, update_with_stack, clear, sampler_init, sum_gen, show_sums, show_stats, show_vals = multi_sampler kkk default_p;;
 
 let to_set_with_list lst m t =
     List.iter (fun z -> to_set z (prob m t z)) lst
@@ -286,6 +284,7 @@ let sample_gibbs_array () =
 
 let run_list () =
     let rec for_round i its pre_time =
+        sampler_init();
         println_int "Round" i;
         let tmp = List.rev (sample_gibbs_list its) in
         if i mod 20 == 0 then save i;
@@ -307,6 +306,7 @@ let run_array () =
     let rec for_round i pre_time=
         if i <= 1000 then
             begin
+            sampler_init();
             println_int "Round" i;
             sample_gibbs_array(); 
             if i mod 10 == 0 then save i;

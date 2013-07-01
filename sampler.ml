@@ -1,11 +1,11 @@
 open Testutils
 
 (*get sums of array a of length k*)
-let get_sums a k =
+let set_sums a k sums =
     let sums = Array.copy a in
     let rec for_iter i =
         match i with
-        0 -> sums
+        0 -> ()
         | i -> 
             let t = (i-1)/2 in sums.(t) <- sums.(t) +. sums.(i);
             for_iter (i-1)
@@ -32,7 +32,8 @@ val clear : unit -> unit = <fun>
 *)
 let multi_sampler k f =
     let avals = Array.init k f in
-    let sums = get_sums avals k in
+    let sums = Array.copy avals in
+    set_sums avals k sums;
     let stats = Array.make (Array.length avals) false in
     let mdfy_stack = Stack.create() in
     let sample_gen () = 
@@ -93,9 +94,13 @@ let multi_sampler k f =
                     for_iter ss
                 end
         in for_iter mdfy_stack;
+    in let init () =
+        Array.iteri (fun i _ -> avals.(i) <- f i) avals;
+        Array.iteri (fun i _ -> stats.(i) <- false) stats;
+        set_sums avals k sums;
     in let show_sums () = sums
     in let show_stats () = stats
     in let show_vals () = avals
     in let sum_gen () = sums.(0)
-    in sample_gen, set, to_set, update_with_stack, clear, sum_gen, show_sums, show_stats, show_vals;;
+    in sample_gen, set, to_set, update_with_stack, clear, init, sum_gen, show_sums, show_stats, show_vals;;
 
