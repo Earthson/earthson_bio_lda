@@ -6,7 +6,7 @@ from translate import *
 
 with open("sample_words") as ff:
     ws = translate(ff.read()).split()
-    #print(ws)
+    print(ws)
     ws = [e for e in ws if e in to_id]
     ids = [to_id[e] for e in ws]
     print(ws)

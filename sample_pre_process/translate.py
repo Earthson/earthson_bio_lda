@@ -5,7 +5,7 @@ import re
 
 _strip_pat0 = re.compile(r'<[^>]*?>')#|{{[^}]*?}}')
 _strip_pat2 = re.compile(r"[^0-9a-zA-Z_-]+|-[-]+|- | -|_[_]+|_ | _")
-_strip_pat3 = re.compile(r'[-0-9]+ | \d+? | \d+|[\^]+')
+_strip_pat3 = re.compile(r'( (\d*-)*[0-9]+)+ |[\^]+| [0-9A-Za-z]{20,}')
 _strip_pat4 = re.compile(r' [ ]+| -|- |_ | _')
 
 _url_pat = re.compile(
