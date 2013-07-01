@@ -197,13 +197,16 @@ let try_tpc_regen m t z nz =
 
 let info_len p = -.(log p)/.(log 2.)
 
+let mdfy_z m t z v =
+    nk.(z) <- nk.(z) + v;
+    nm.(m) <- nm.(m) + v;
+    wcnt := !wcnt + v;
+    omcnt.(m).(z) <- omcnt.(m).(z) + v;
+    otcnt.(t).(z) <- otcnt.(t).(z) + v;;
+
 let sample_one (pm, pt, _) (m, t, z) =
     let pre = if pm != m || pt != t then false else true in
-    nk.(z) <- nk.(z) - 1;
-    nm.(m) <- nm.(m) - 1;
-    wcnt := !wcnt - 1;
-    omcnt.(m).(z) <- omcnt.(m).(z) - 1;
-    otcnt.(t).(z) <- otcnt.(t).(z) - 1;
+    mdfy_z m t z (-1);
     if pre == false then
         begin
         clear();
@@ -214,16 +217,13 @@ let sample_one (pm, pt, _) (m, t, z) =
         end
     else set z (prob m t z);
     let nz = sample_gen() in
-    otcnt.(t).(nz) <- otcnt.(t).(nz) + 1;
-    omcnt.(m).(nz) <- omcnt.(m).(nz) + 1;
-    wcnt := !wcnt + 1;
-    nm.(m) <- nm.(m) + 1;
-    nk.(nz) <- nk.(nz) + 1;
-    set nz (prob m t nz);
-    try_tpc_regen m t z nz;
     let tmpsum = 
         sum_gen()/.((float_of_int nm.(m))+.(float_of_int kkk)*.alpha)
-    in (nz, info_len tmpsum);;
+    in
+    mdfy_z m t nz 1;
+    set nz (prob m t nz);
+    try_tpc_regen m t z nz;
+    (nz, info_len tmpsum);;
 
 
 let reduce_round lst =
@@ -293,8 +293,8 @@ let run_list () =
             let cur_time = (Sys.time()) in
             println_float "time" (cur_time -. pre_time);
             show_clear_cnts();
-            let step = 600 in
-            if i mod step == (step-1) && i <= 3000 then 
+            let step = 200 in
+            if i mod step == (step-1) && i <= 1000 then 
                 for_round (i+1) (reduce_round tmp) cur_time
             else
                 for_round (i+1) tmp cur_time
