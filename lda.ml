@@ -153,6 +153,17 @@ let kl_dis px py =
         else for_iter (ans+.px.(i)*.(log (px.(i)/.py.(i)))/.(log 2.0)) (i+1)
     in for_iter 0.0 0;;
 
+let distances_to_sample () =
+    let ed = !dcnt - 1 in
+    let rec for_iter i accum =
+        if i == ed then accum
+        else for_iter (i+1) ((kl_dis (doc_dist ed) (doc_dist i))::accum)
+    in List.rev (for_iter 0 []);;
+            
+let save_distances lst rd = 
+    with_o (open_out ("save/distances"^(string_of_int rd))) (fun out_chan ->
+                List.iter (fun dis -> Printf.fprintf out_chan "%f " dis) lst)
+
 let sample_gen, set, to_set, update_with_stack, clear, sampler_init, sum_gen, show_sums, show_stats, show_vals = multi_sampler kkk default_p;;
 
 let to_set_with_list lst m t =
@@ -293,14 +304,17 @@ let run_list () =
             let cur_time = (Sys.time()) in
             println_float "time" (cur_time -. pre_time);
             show_clear_cnts();
-            let step = 200 in
-            if i mod step == (step-1) && i <= 1000 then 
+            let step = 500 in
+            if i mod step == (step-1) then
+                save_distances (distances_to_sample()) i;
+            if i mod step == (step-1) && i <= 3000 then 
                 for_round (i+1) (reduce_round tmp) cur_time
             else
                 for_round (i+1) tmp cur_time
             end
         else tmp
         in for_round 0 doc_list (Sys.time());;
+
 
 let run_array () = 
     let rec for_round i pre_time=
