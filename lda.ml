@@ -117,7 +117,8 @@ let re_stat_init d_lst =
     clear_stats ();
     do_init_stat d_lst;
     get_nonzerod ();
-    get_nonzerot ();;
+    get_nonzerot ();
+    wcnt := List.length d_lst;;
 
 
 let print_line out_chan a =
@@ -298,7 +299,7 @@ let run_list () =
         sampler_init();
         println_int "Round" i;
         let tmp = List.rev (sample_gibbs_list its) in
-        if i mod 20 == 0 then save i;
+        if i mod 50 == 49 then save i;
         if i <= 5000 then
             begin
             let cur_time = (Sys.time()) in
