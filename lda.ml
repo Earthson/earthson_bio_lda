@@ -43,6 +43,7 @@ with_i (open_in "data/info") read_info;;
 let doc_list = with_i (open_in "data/doc_list") (read_docs []);;
 let doc_list = with_i (open_in "data/reduced_sample") (read_docs doc_list);;
 dcnt := !dcnt + 1;;
+wcnt := List.length doc_list;;
 let doc_array = Array.of_list doc_list;;
 (*init matrixs of count*)
 let otcnt = Array.init !tcnt (fun x -> Array.make kkk 0);;
