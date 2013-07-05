@@ -21,7 +21,7 @@ alpha, beta = 50.0/kkk, 0.01
 with open("data/doc_ids") as tmpfile:
     doc_ids = [int(each) for each in tmpfile.read().split()]
 
-with open("save/distances499") as tmpfile:
+with open("save/distances4999") as tmpfile:
     doc_dis = [float(each) for each in tmpfile.read().split()]
 
 from db_utils import *
