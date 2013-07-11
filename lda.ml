@@ -44,7 +44,6 @@ let doc_list = with_i (open_in "data/doc_list") (read_docs []);;
 let doc_list = with_i (open_in "data/reduced_sample") (read_docs doc_list);;
 dcnt := !dcnt + 1;;
 wcnt := List.length doc_list;;
-let doc_array = Array.of_list doc_list;;
 (*init matrixs of count*)
 let otcnt = Array.init !tcnt (fun x -> Array.make kkk 0);;
 let omcnt = Array.init !dcnt (fun x -> Array.make kkk 0);;
@@ -166,10 +165,10 @@ let save_distances lst rd =
     with_o (open_out ("save/distances"^(string_of_int rd))) (fun out_chan ->
                 List.iter (fun dis -> Printf.fprintf out_chan "%f " dis) lst)
 
-let sample_gen, set, to_set, update_with_stack, clear, sampler_init, sum_gen, show_sums, show_stats, show_vals = multi_sampler kkk default_p;;
+let s0 = Sampler.make default_p kkk;;
 
 let to_set_with_list lst m t =
-    List.iter (fun z -> to_set z (prob m t z)) lst
+    List.iter (fun z -> Sampler.to_set s0 z (prob m t z)) lst
 
 let clear_zero tpclist tpcstat =
     let rec for_iter accum = function
@@ -222,19 +221,19 @@ let sample_one (pm, pt, _) (m, t, z) =
     mdfy_z m t z (-1);
     if pre == false then
         begin
-        clear();
-        to_set z (prob m t z);
+        Sampler.clear s0;
+        Sampler.to_set s0 z (prob m t z);
         to_set_with_list ttpc.(t) m t;
         to_set_with_list mtpc.(m) m t;
-        update_with_stack()
+        Sampler.with_stack s0
         end
-    else set z (prob m t z);
-    let nz = sample_gen() in
+    else Sampler.set s0 z (prob m t z);
+    let nz = Sampler.gen s0 in
     let tmpsum = 
-        sum_gen()/.((float_of_int nm.(m))+.(float_of_int kkk)*.alpha)
+        s0.sums.(0)/.((float_of_int nm.(m))+.(float_of_int kkk)*.alpha)
     in
     mdfy_z m t nz 1;
-    set nz (prob m t nz);
+    Sampler.set s0 nz (prob m t nz);
     try_tpc_regen m t z nz;
     (nz, info_len tmpsum);;
 
@@ -282,22 +281,9 @@ let sample_gibbs_list its =
     println_float "sum" (sum/.(float_of_int !wcnt));
     lst;;
 
-let sample_gibbs_array () =
-    let rec round i pre sum =
-        if i == !wcnt then sum
-        else
-            begin
-            let (m, t, z) = doc_array.(i) in
-            let nz, info = sample_one pre (m, t, z) in
-            doc_array.(i) <- (m, t, nz);
-            round (i+1) (m, t, z) (sum+.info)
-            end
-    in let sum = round 0 (-1, -1, -1) 0.0 in
-    println_float "sum" (sum/.(float_of_int !wcnt));;
-
 let run_list () =
     let rec for_round i its pre_time =
-        sampler_init();
+        Sampler.init s0 default_p;
         println_int "Round" i;
         let tmp = List.rev (sample_gibbs_list its) in
         if i mod 50 == 49 then save i;
@@ -318,22 +304,5 @@ let run_list () =
         in for_round 0 doc_list (Sys.time());;
 
 
-let run_array () = 
-    let rec for_round i pre_time=
-        if i <= 1000 then
-            begin
-            sampler_init();
-            println_int "Round" i;
-            sample_gibbs_array(); 
-            if i mod 10 == 0 then save i;
-            let cur_time = (Sys.time()) in
-            println_float "time" (cur_time -. pre_time);
-            (*show_clear_cnts();*)
-            for_round (i+1) cur_time
-            end
-        else ()
-        in for_round 0 (Sys.time());;
-
-(*let _ = run_array();;*)
 let _ = run_list();;
 
