@@ -21,14 +21,19 @@ alpha, beta = 50.0/kkk, 0.01
 with open("data/doc_ids") as tmpfile:
     doc_ids = [int(each) for each in tmpfile.read().split()]
 
-with open("save/distances4999") as tmpfile:
-    doc_dis = [float(each) for each in tmpfile.read().split()]
+def with_save(rd):
+    fname = "save/distances"+str(rd)
+    with open(fname) as tmpfile:
+        return [float(each) for each in tmpfile.read().split()]
 
 from db_utils import *
 
-for eid, edis in sorted(zip(doc_ids, doc_dis), key = lambda x: x[1])[:10]:
-    dtmp = biodata.origin_doc.find_one({"_id":eid})
-    print(r"%s & %s\\\hline" % (edis, dtmp["title"]))
+for rd in range(499, 5000, 500):
+    doc_dis = with_save(rd)
+    print("#Round: %d\n\n\n" % rd)
+    for eid, edis in sorted(zip(doc_ids, doc_dis), key = lambda x: x[1])[:10]:
+        dtmp = biodata.origin_doc.find_one({"_id":eid})
+        print(r"%s & %s\\\hline" % (edis, dtmp["title"]))
 #    print("########")
 #    print(eid, edis)
 #    print("# Title")
