@@ -30,7 +30,7 @@ from db_utils import *
 
 for rd in range(499, 5000, 500):
     doc_dis = with_save(rd)
-    print("#Round: %d\n\n\n" % rd)
+    print("#Round: d" % rd)
     for eid, edis in sorted(zip(doc_ids, doc_dis), key = lambda x: x[1])[:10]:
         dtmp = biodata.origin_doc.find_one({"_id":eid})
         print(r"%s & %s\\\hline" % (edis, dtmp["title"]))
@@ -42,4 +42,4 @@ for rd in range(499, 5000, 500):
 #    print(dtmp["abstract"])
 #    print("# Text")
 #    print(dtmp["body"])
-
+    print("\n\n\n")
