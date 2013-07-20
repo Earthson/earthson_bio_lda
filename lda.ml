@@ -159,11 +159,19 @@ let d_js px py =
     let b = d_kl py px in
     (a +. b)/. 2.;;
 
+let d_cos px py =
+    let rec for_iter ans i =
+        if i == Array.length px then ans
+        else for_iter (ans+.px.(i)*.py.(i)) (i+1)
+    in 1.0-.(for_iter 0.0 0);;
+
+let fdis = d_cos;;
+
 let distances_to_sample () =
     let ed = !dcnt - 1 in
     let rec for_iter i accum =
         if i == ed then accum
-        else for_iter (i+1) ((d_js (doc_dist ed) (doc_dist i))::accum)
+        else for_iter (i+1) ((fdis (doc_dist ed) (doc_dist i))::accum)
     in List.rev (for_iter 0 []);;
             
 let save_distances lst rd = 
@@ -246,13 +254,13 @@ let sample_one (pm, pt, _) (m, t, z) =
 let reduce_round lst =
     println_int "before_reduce" (List.length lst);
     let base_dist = doc_dist (!dcnt-1) in
-    let uniform_dis = d_js base_dist (uniform_k kkk) in
+    let uniform_dis = fdis base_dist (uniform_k kkk) in
     let ans_lst = 
         let rec for_iter accum = function
         [] -> accum
         |(m, t, z)::rlft -> 
             let w_dist = word_dist m t in
-            let cur_dis = d_js base_dist w_dist in
+            let cur_dis = fdis base_dist w_dist in
             for_iter ((m, t, z, cur_dis)::accum) rlft
         in for_iter [] lst
     in 
