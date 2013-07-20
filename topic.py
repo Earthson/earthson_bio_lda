@@ -57,6 +57,8 @@ alpha, beta = 50.0/kkk, 0.01
 t_map = [[i for i in range(wcnt) if wdist[i][k] > 0] 
                     for k in range(kkk)]
 
+nt = [sum(e) for e in wdist]
+
 #print(kkk, mcnt, wcnt)
 #print(len(mdist), len(wdist))
 #print(nk)
@@ -66,8 +68,13 @@ def top_n(n):
     return [sorted(t_map[k], key=lambda it: wdist[it][k], reverse=True)[:n]
                     for k in range(kkk)]
 
+
 #print(times)
 
 for each in top_n(50):
     print(' '.join(repr(to_word[e]) for e in each))
     print()
+
+
+print(" ".join(str(e) for e in nt))
+
