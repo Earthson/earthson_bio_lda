@@ -254,7 +254,7 @@ let sample_one (pm, pt, _) (m, t, z) =
 let reduce_round lst =
     println_int "before_reduce" (List.length lst);
     let base_dist = doc_dist (!dcnt-1) in
-    let uniform_dis = fdis base_dist (uniform_k kkk) in
+    let gate = fdis base_dist (uniform_k kkk) in
     let ans_lst = 
         let rec for_iter accum = function
         [] -> accum
@@ -267,19 +267,19 @@ let reduce_round lst =
     let _ = with_o (open_out ("save/wdist"^(string_of_int (ncnts.(9) 1)))) (fun out_chan ->
                 List.iter (fun (_, _, _, dis) -> Printf.fprintf out_chan "%f\n" dis) ans_lst)
     in
-    let sum, len = List.fold_left (fun (x, l) (_, _, _, y) -> (x+.y, l+1)) (0.0, 0) ans_lst in
-    let avr = sum/.(float_of_int len) in
+    (*let sum, len = List.fold_left (fun (x, l) (_, _, _, y) -> (x+.y, l+1)) (0.0, 0) ans_lst in
+    let avr = sum/.(float_of_int len) in*)
     let ans =
         let rec for_iter accum = function
             [] -> accum
             | (m, t, z, dis)::rlft ->
-                if dis > avr then
+                if dis > gate then
                     for_iter accum rlft
                 else for_iter ((m, t, Random.int kkk)::accum) rlft
         in for_iter [] ans_lst
     in
     println_int "after_reduce" (List.length ans);
-    println_float "norm" uniform_dis;
+    println_float "norm" gate;
     re_stat_init ans;
     ans;;
 
