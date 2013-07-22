@@ -159,13 +159,13 @@ let d_js px py =
     let b = d_kl py px in
     (a +. b)/. 2.;;
 
-let d_cos px py =
+let sim_cross px py =
     let rec for_iter ans i =
         if i == Array.length px then ans
         else for_iter (ans+.px.(i)*.py.(i)) (i+1)
-    in 1.0-.(for_iter 0.0 0);;
+    in sqrt (for_iter 0.0 0);;
 
-let fdis = d_cos;;
+let fdis = sim_cross;;
 
 let distances_to_sample () =
     let ed = !dcnt - 1 in
@@ -273,7 +273,7 @@ let reduce_round lst =
         let rec for_iter accum = function
             [] -> accum
             | (m, t, z, dis)::rlft ->
-                if dis > gate then
+                if dis < gate then
                     for_iter accum rlft
                 else for_iter ((m, t, Random.int kkk)::accum) rlft
         in for_iter [] ans_lst
